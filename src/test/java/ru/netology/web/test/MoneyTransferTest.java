@@ -18,6 +18,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 import static ru.netology.web.data.DataHelper.*;
 
 class MoneyTransferTest {
+
     private DataHelper.UserInfo userInfo;
     private LoginPage loginPage;
     private VerificationPage verificationPage;
@@ -29,10 +30,14 @@ class MoneyTransferTest {
 
         open("http://localhost:9999");
         val loginPage = new LoginPage();
-        userInfo = DataHelper.getUserInfo(); // берем данные пользователя
-        verificationPage = loginPage.validLogin(userInfo); // вводим логин и пароль на странице входа, переходим на страницу верификации
-        val verificationCode = DataHelper.getVerificationCodeFor(userInfo); // берем подготовленный код верификации
-        dashboardCardListSubPage = verificationPage.validVerify(verificationCode); // вводим код проверки на странице верификации, переходим на страницу личного кабинета, подстраницу списка карт
+        // берем данные пользователя
+        userInfo = DataHelper.getUserInfo();
+        // вводим логин и пароль на странице входа, переходим на страницу верификации
+        verificationPage = loginPage.validLogin(userInfo);
+        // берем подготовленный код верификации
+        val verificationCode = DataHelper.getVerificationCodeFor(userInfo);
+        // вводим код проверки на странице верификации, переходим на страницу личного кабинета, подстраницу списка карт
+        dashboardCardListSubPage = verificationPage.validVerify(verificationCode);
 
     }
 
@@ -59,18 +64,14 @@ class MoneyTransferTest {
     @Test
     void shouldNotTransferMoneyFromWrongCardNumber() {
 
-        // считываем текущие значения баланса каждой карты из списка карт
         dashboardCardListSubPage.getAllCardBalances(userInfo);
-        // берем подготовленный номер карты-получателя залогиненного пользователя
         val recipientCardNumber = getCardNumber(userInfo, 0);
-        // выбираем карту для пополнения на подстранице списка карт, переходим на подстраницу пополнения карты
         dashboardRefillSubPage = dashboardCardListSubPage.chooseCardToRefill(recipientCardNumber);
-        // берем номер карты-источника залогиненного пользователя и подготовленную сумму пополнения больше доступной на  карте-источнике
+        // берем номер карты-источника залогиненного пользователя и подготовленную сумму пополнения в пределах баланса карты-источника
         val sourceCardNumber = getWrongCardNumber(userInfo);
-        val transferAmount = getInValidTransferAmount(userInfo, sourceCardNumber);
-        // вводим сумму и карту-источник, возвращаемся на подстраницу списка карт
+        val transferAmount = getValidTransferAmount(userInfo, sourceCardNumber);
         dashboardCardListSubPage = dashboardRefillSubPage.refillCard(transferAmount, sourceCardNumber);
-        // проверяем правильно ли прошел перевод / сообщение об ошибке
+        // проверяем сообщение об ошибке
         assertTrue(dashboardRefillSubPage.isError());
 
     }
@@ -78,18 +79,14 @@ class MoneyTransferTest {
     @Test
     void shouldNotTransferMoneyIfOutOfBalance() {
 
-        // считываем текущие значения баланса каждой карты из списка карт
         dashboardCardListSubPage.getAllCardBalances(userInfo);
-        // берем подготовленный номер карты-получателя залогиненного пользователя
         val recipientCardNumber = getCardNumber(userInfo, 0);
-        // выбираем карту для пополнения на подстранице списка карт, переходим на подстраницу пополнения карты
         dashboardRefillSubPage = dashboardCardListSubPage.chooseCardToRefill(recipientCardNumber);
         // берем номер карты-источника залогиненного пользователя и подготовленную сумму пополнения больше доступной на  карте-источнике
         val sourceCardNumber = getCardNumber(userInfo, 1);
         val transferAmount = getInValidTransferAmount(userInfo, sourceCardNumber);
-        // вводим сумму и карту-источник, возвращаемся на подстраницу списка карт
         dashboardCardListSubPage = dashboardRefillSubPage.refillCard(transferAmount, sourceCardNumber);
-        // проверяем правильно ли прошел перевод / сообщение об ошибке
+        // проверяем сообщение об ошибке
         assertTrue(dashboardRefillSubPage.isError());
 
     }
